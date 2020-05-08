@@ -36,20 +36,17 @@ class Player {
         int turn = 1;
         while (true) {
             int myScore = in.nextInt();
-            System.err.println("myScore : " + myScore);
             int opponentScore = in.nextInt();
-            System.err.println("opponentScore : " + opponentScore);
             int visiblePacCount = in.nextInt(); // all your pacs and enemy pacs in sight
-            System.err.println("visiblePacCount : " + visiblePacCount);
+            List<Integer> pacIds = new ArrayList<Integer>();
             for (int i = 0; i < visiblePacCount; i++) {
                 int pacId = in.nextInt(); // pac number (unique within a team)
-                   System.err.println("pacId : " + pacId);
                 boolean mine = in.nextInt() != 0; // true if this pac is yours
-                   System.err.println("mine : " + mine);
+                if (mine) {
+                	pacIds.add(pacId);
+                }
                 int x = in.nextInt(); // position in the grid
-                   System.err.println(x);
                 int y = in.nextInt(); // position in the grid
-                   System.err.println(y);
                 String typeId = in.next(); // unused in wood leagues
                 int speedTurnsLeft = in.nextInt(); // unused in wood leagues
                 int abilityCooldown = in.nextInt(); // unused in wood leagues
@@ -61,6 +58,8 @@ class Player {
                 	board.setPelletValue(x, y, 0);
                 }
             }
+            
+            Pac.removeKilledPacs(pacIds);
             
             int visiblePelletCount = in.nextInt(); // all pellets in sight
             int[][] pellets = new int[visiblePelletCount][2];

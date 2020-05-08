@@ -79,6 +79,22 @@ public class Pac {
 	}
 
 	/**
+	 * Retire les Pacs morts dans la liste de mes Pacs
+	 * @param listremaining		mes Pacs restant
+	 */
+	public static void removeKilledPacs(List<Integer> listremaining) {
+		List<Pac> killed = new ArrayList<Pac>();
+		
+		for (Pac pac : myList) {
+			if (!listremaining.contains(pac.getPacId())){
+				killed.add(pac);
+			}
+		}
+		
+		myList.removeAll(killed);
+	}
+	
+	/**
 	 * retourne si le Pac est égal à un autre
 	 */
 	public boolean equals(Object pac) {
