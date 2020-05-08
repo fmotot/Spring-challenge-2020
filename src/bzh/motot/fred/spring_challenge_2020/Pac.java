@@ -48,6 +48,10 @@ public class Pac {
 		}
 	}
 	
+	/**
+	 * Renvois les ordres pour tous les Pacs
+	 * @return
+	 */
 	public static String getOrders() {
 		String orders = "";
 		int x = -1;
@@ -74,6 +78,9 @@ public class Pac {
 		return orders;
 	}
 
+	/**
+	 * retourne si le Pac est égal à un autre
+	 */
 	public boolean equals(Object pac) {
 		boolean equal = false;
 

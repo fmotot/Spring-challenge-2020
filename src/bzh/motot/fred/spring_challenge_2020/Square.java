@@ -24,7 +24,7 @@ public class Square {
 	public final int Y;
 	
 	private int pelletValue;
-	private List<Square> squares = new ArrayList<Square>();
+	private List<Square> contiguousSquares = new ArrayList<Square>();
 
 	public Square(int x, int y, int pelletValue) {
 		this(x, y);
@@ -66,6 +66,7 @@ public class Square {
 	}
 
 	/**
+	 * Retourne la liste des squares contenant un pellet à 1
 	 * @return the listPellet
 	 */
 	public static List<Square> getListPellet() {
@@ -73,6 +74,7 @@ public class Square {
 	}
 
 	/**
+	 * Retourne la liste de tous les Square
 	 * @return the list
 	 */
 	public static List<Square> getList() {
@@ -80,6 +82,7 @@ public class Square {
 	}
 
 	/**
+	 * Retourne la liste des squares contenant un pellet à 10
 	 * @return the listBigPellet
 	 */
 	public static List<Square> getListBigPellet() {
@@ -87,17 +90,20 @@ public class Square {
 	}
 
 	/**
+	 * Retourne la liste des squares contigües
 	 * @return the squares
 	 */
-	public List<Square> getSquares() {
-		return squares;
+	public List<Square> getContiguousSquares() {
+		return contiguousSquares;
 	}
 
 	/**
-	 * @param squares the squares to set
+	 * Ajoute le Square à la liste des Square contigües et inversement
+	 * @param square 
 	 */
-	public void addSquare(Square square) {
-		this.squares.add(square);
+	public void addContiguousSquare(Square square) {
+		this.contiguousSquares.add(square);
+		square.contiguousSquares.add(this);
 	}
 
 }
