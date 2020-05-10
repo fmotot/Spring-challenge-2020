@@ -151,6 +151,13 @@ public class Pac {
 				} else {
 					// la première pastille connue la plus proche
 					Square target = Square.getListPellet().get(0);
+					
+					try {
+						target = Board.get().getLocation(this).nearestPellet();
+					} catch (PathNotFoundException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
 					x = target.X;
 					y = target.Y;
 				}
