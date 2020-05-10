@@ -19,7 +19,7 @@ public class Board {
 		this.board = new Square[this.WIDTH][this.HEIGHT];
 	}
 	
-	public static Board get() {
+	public static Board getInstance() {
 		return instance;
 	}
 	
@@ -65,7 +65,14 @@ public class Board {
 		}
 	}
 	
+	public Square getSquare(int x, int y) {
+		return board[x][y];
+	}
+	
 	public Square getLocation(Pac pac) {
+		if (pac.getX() == -1) {
+			return null;
+		}
 		return board[pac.getX()][pac.getY()];
 	}
 

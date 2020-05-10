@@ -1,6 +1,7 @@
 package bzh.motot.fred.spring_challenge_2020;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -8,6 +9,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.PriorityQueue;
 import java.util.Queue;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -45,25 +47,46 @@ public class Square {
 		Square.listPellet = Square.list.stream().collect(Collectors.toList());
 	}
 
+	/**
+	 * parmi les squares visibles de tous les pac, on met à 0 la pastille de ceux
+	 * qui ne sont pas dans la liste des pastilles visibles
+	 * 
+	 * @param visiblePellets
+	 */
+	public static void setVisiblePellets(Set<Square> visiblePellets) {
+		Set<Square> list = Pac.getAllVisibleSquares();
+		list.removeAll(visiblePellets);
+
+		for (Square square : list) {
+			square.setPelletValue(0);
+		}
+	}
+
 	public Square nearestPellet() throws PathNotFoundException {
+		initPathFinding();
 		Square nearest = null;
 		Queue<Square> list = new LinkedList<Square>();
 		list.add(this);
-		
-		while(nearest == null) {
+
+		while (nearest == null) {
 			Square current = list.poll();
-			
-			for (Square square : current.contiguousSquares) {
-				if (!list.contains(square)) {
-					list.add(square);
+
+			try {
+				for (Square square : current.contiguousSquares) {
+					if (!list.contains(square) && square.isFree()) {
+						list.add(square);
+					}
 				}
+			} catch (NullPointerException e) {
+				// TODO: handle exception
+				throw new PathNotFoundException("Pas de pellet à portée");
 			}
-			
+
 			if (current.getPelletValue() > 0) {
 				nearest = current;
 			}
 		}
-		
+
 		return nearest;
 	}
 
@@ -75,7 +98,11 @@ public class Square {
 	 * @return
 	 * @throws PathNotFoundException
 	 */
-	public List<Square> shortestPath(Square target) throws PathNotFoundException {
+	public List<Square> shortestPathWithBlock(Square target) throws PathNotFoundException {
+		return this.shortestPath(target, true);
+	}
+
+	public List<Square> shortestPath(Square target, boolean withBlock) throws PathNotFoundException {
 		Square.initPathFinding();
 		Queue<Square> open = new PriorityQueue<Square>(new Comparator<Square>() {
 
@@ -105,7 +132,10 @@ public class Square {
 			for (Square square : current.contiguousSquares) {
 				int cost = current.getCost() + 1;
 
-				if (cost < square.getCost()) {
+				// si le square contient un Pac alors on ne va pas par là
+				boolean isFree = withBlock ? square.isFree() : true;
+
+				if (isFree && cost < square.getCost()) {
 					square.setCameFrom(current);
 					square.setCost(cost);
 					square.setHeuristic(square.getCost() + square.calcHeuristic(target));
@@ -121,6 +151,31 @@ public class Square {
 				"Aucun chemin trouvé de " + this.X + " " + this.Y + " vers " + target.X + " " + target.Y);
 	}
 
+	public List<Square> shortestPathWithoutBlock(Square target) throws PathNotFoundException {
+		return this.shortestPath(target, false);
+	}
+
+	/**
+	 * indique si le Square est libre (aucun Pac dessus)
+	 * 
+	 * @return
+	 */
+	private boolean isFree() {
+		for (Pac pac : Pac.getMyList()) {
+			if (this == pac.getLocation()) {
+				return false;
+			}
+		}
+
+		for (Pac pac : Pac.getOppList()) {
+			if (this == pac.getLocation()) {
+				return false;
+			}
+		}
+
+		return true;
+	}
+
 	/**
 	 * calcule la distance minimal s'il n'y a pas de mur (idéal)
 	 * 
@@ -133,7 +188,7 @@ public class Square {
 		Square min = this.X <= target.X ? this : target;
 		Square max = this.X >= target.X ? this : target;
 
-		heuristic += Math.min((min.X - max.X + Board.get().WIDTH), Math.abs(this.X - target.X));
+		heuristic += Math.min((min.X - max.X + Board.getInstance().WIDTH), Math.abs(this.X - target.X));
 
 		return heuristic;
 	}
@@ -280,7 +335,7 @@ public class Square {
 
 	@Override
 	public String toString() {
-		return "Square [X=" + X + ", Y=" + Y + "]";
+		return "Square [X=" + X + ", Y=" + Y + ", pellet=" + pelletValue + "]";
 	}
 
 }

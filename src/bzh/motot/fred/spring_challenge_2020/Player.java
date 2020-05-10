@@ -34,8 +34,6 @@ class Player {
         }
 
         // game loop
-        int xMove = -1;
-        int yMove = -1;
         int turn = 1;
         while (true) {
             int myScore = in.nextInt();
@@ -72,25 +70,15 @@ class Player {
             
             // TODO la vue de mes Pacs contre les pellets visibles pour mettre à 0 ceux qui n'en contiennent plus
             int visiblePelletCount = in.nextInt(); // all pellets in sight
-            int[][] pellets = new int[visiblePelletCount][2];
+            Set<Square> visiblePellets = new HashSet<Square>();
             for (int i = 0; i < visiblePelletCount; i++) {
-                int x = in.nextInt();
-                int y = in.nextInt();
-                int value = in.nextInt(); // amount of points this pellet is worth
 
-                pellets[i][0] = x;
-                pellets[i][1] = y;
-                if (turn == 1) {
-                	board.setPelletValue(x, y, value);
-                }
+            	Square square = board.getSquare(in.nextInt(), in.nextInt());
+            	square.setPelletValue(in.nextInt());
+            	visiblePellets.add(square);
             }
 
-
-            if (xMove == -1){
-                int[] pellet = pellets[new Random().nextInt(visiblePelletCount)];
-                xMove = pellet[0];
-                yMove = pellet[1];
-            }
+            Square.setVisiblePellets(visiblePellets);
 
             // Write an action using System.out.println()
             // To debug: System.err.println("Debug messages...");

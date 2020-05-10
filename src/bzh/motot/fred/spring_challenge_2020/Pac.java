@@ -3,9 +3,13 @@ package bzh.motot.fred.spring_challenge_2020;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Queue;
+import java.util.Set;
 
 public class Pac {
 	public final int PAPER = 1;
@@ -57,6 +61,47 @@ public class Pac {
 	}
 
 	/**
+	 * renvoie la liste des Squares visibles de tous les Pacs
+	 * @return
+	 */
+	public static Set<Square> getAllVisibleSquares() {
+		Set<Square> list = new HashSet<Square>();
+
+		for (Pac pac : myList) {
+			list.addAll(pac.getVisibleSquares());
+		}
+
+		return list;
+	}
+
+	/**
+	 * renvoie la liste des Squares visibles du Pac
+	 * @return
+	 */
+	private Set<Square> getVisibleSquares() {
+		Set<Square> list = new HashSet<Square>();
+		Square location = this.getLocation();
+		
+		Queue<Square> queue = new LinkedList<Square>();
+		queue.add(location);
+		
+
+		while (queue.size() > 0) {
+			Square current = queue.poll();
+			
+			for (Square square : current.getContiguousSquares()) {
+				if (!list.contains(square) && (square.X == location.X || square.Y == location.Y)) {
+					queue.add(square);
+				}
+			}
+			list.add(current);
+		}
+		
+		
+		return list;
+	}
+
+	/**
 	 * Renvois les ordres pour tous les Pacs
 	 * 
 	 * @return
@@ -79,6 +124,10 @@ public class Pac {
 
 		return orders;
 	}
+	
+	public Square getLocation() {
+		return Board.getInstance().getLocation(this);
+	}
 
 	/**
 	 * indique la cible pour le Pac
@@ -97,7 +146,7 @@ public class Pac {
 		for (Pac pac : oppList) {
 			try {
 				if (pac.getX() != -1) {
-					enemies.put(pac, Board.get().getLocation(this).shortestPath(Board.get().getLocation(pac)));
+					enemies.put(pac, this.getLocation().shortestPathWithoutBlock(pac.getLocation()));
 				}
 			} catch (PathNotFoundException e) {
 				// TODO Auto-generated catch block
@@ -113,18 +162,19 @@ public class Pac {
 		}
 
 		if (order.equals("")) {
-			
+
 			if (this.getAbilityCooldown() == 0) {
 				// j'accélère si je peux
 				order = "SPEED " + this.getPacId();
 			} else {
 				// sinon je me déplace
 				order = "MOVE " + this.getPacId() + " ";
+
 				if (Square.getListBigPellet().size() > 0) {
 					// vers la grosse pastille la plus proche si elle existe
 					for (Square bigPellet : Square.getListBigPellet()) {
 						try {
-							paths.add(Board.get().getLocation(this).shortestPath(bigPellet));
+							paths.add(this.getLocation().shortestPathWithBlock(bigPellet));
 						} catch (PathNotFoundException e) {
 							// TODO Auto-generated catch block
 							System.err.println(e.getMessage());
@@ -145,18 +195,24 @@ public class Pac {
 								return 0;
 							}
 						}).get();
+						// je me dirige vers la prochaine pastille sur mon chemin
+						x = path.get(1).X;
+						y = path.get(1).Y;
 					}
-					x = path.get(path.size() - 1).X;
-					y = path.get(path.size() - 1).Y;
-				} else {
+				} 
+				
+				if (x == -1){
 					// la première pastille connue la plus proche
-					Square target = Square.getListPellet().get(0);
-					
+					Square target = null;
+
 					try {
-						target = Board.get().getLocation(this).nearestPellet();
+						target = this.getLocation().nearestPellet();
+						// TODO modifier nearest
+						target = this.getLocation().shortestPathWithBlock(target).get(1);
 					} catch (PathNotFoundException e) {
 						// TODO Auto-generated catch block
 						e.printStackTrace();
+						target = this.getLocation();
 					}
 					x = target.X;
 					y = target.Y;
@@ -167,7 +223,7 @@ public class Pac {
 
 		return order;
 	}
-
+	
 	private String attackPac(Pac enemy) {
 		String switchPac = "";
 
