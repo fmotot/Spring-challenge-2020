@@ -18,6 +18,7 @@ public class Pac {
 
 	private static List<Pac> myList = new ArrayList<Pac>();
 	private static List<Pac> oppList = new ArrayList<Pac>();
+	public static List<String> orderList;
 
 	private int pacId; // pac number (unique within a team)
 	private int x; // position in the grid
@@ -62,6 +63,7 @@ public class Pac {
 
 	/**
 	 * renvoie la liste des Squares visibles de tous les Pacs
+	 * 
 	 * @return
 	 */
 	public static Set<Square> getAllVisibleSquares() {
@@ -76,19 +78,19 @@ public class Pac {
 
 	/**
 	 * renvoie la liste des Squares visibles du Pac
+	 * 
 	 * @return
 	 */
 	private Set<Square> getVisibleSquares() {
 		Set<Square> list = new HashSet<Square>();
 		Square location = this.getLocation();
-		
+
 		Queue<Square> queue = new LinkedList<Square>();
 		queue.add(location);
-		
 
 		while (queue.size() > 0) {
 			Square current = queue.poll();
-			
+
 			for (Square square : current.getContiguousSquares()) {
 				if (!list.contains(square) && (square.X == location.X || square.Y == location.Y)) {
 					queue.add(square);
@@ -96,8 +98,7 @@ public class Pac {
 			}
 			list.add(current);
 		}
-		
-		
+
 		return list;
 	}
 
@@ -109,22 +110,27 @@ public class Pac {
 	public static String getOrders() {
 		String orders = "";
 
+		System.err.println("Opp Pacs");
 		for (Pac pac : oppList) {
 			System.err.println(pac);
 		}
 
+		System.err.println("My Pacs");
+		orderList = new ArrayList<String>();
 		for (Pac pac : myList) {
 			System.err.println(pac);
-			if (orders.length() > 0) {
-				orders += " | ";
-			}
-			orders += pac.getOrder();
-
+			String order = pac.getOrder();
+			System.err.println("Ordre pour " + pac.pacId + " : " + order);
+			orderList.add(order);
+		}
+		
+		for (String order : orderList) {
+			orders += order + " | ";
 		}
 
 		return orders;
 	}
-	
+
 	public Square getLocation() {
 		return Board.getInstance().getLocation(this);
 	}
@@ -153,14 +159,19 @@ public class Pac {
 				e.printStackTrace();
 			}
 		}
+		
+		// TODO voir les cas ou 2 pac ennemi ou plus sont à proximité
+		// TODO garder en mémoire plus longtemps la position d'un Pac ennemi (voir extrapoler ses nouvelles positions possibles)
+		// TODO si ennemi peut aller sur prochaine case, vérifier si WIN
+		// TODO avancer des 2 cases aussi pour les nearest et les attaques ?
 
-		// s'il y a un pac à moins de 5 cases, je change de type et je l'attaque
+		// s'il y a un pac à moins de X cases, je vois si je peux l'attaquer
 		for (Entry<Pac, List<Square>> entry : enemies.entrySet()) {
-			if (entry.getValue().size() < 6) {
-				order = this.attackPac(entry.getKey());
+			if (entry.getValue().size() < 5) {
+				order = this.attackPac(entry);
 			}
 		}
-
+		
 		if (order.equals("")) {
 
 			if (this.getAbilityCooldown() == 0) {
@@ -169,6 +180,7 @@ public class Pac {
 			} else {
 				// sinon je me déplace
 				order = "MOVE " + this.getPacId() + " ";
+				
 
 				if (Square.getListBigPellet().size() > 0) {
 					// vers la grosse pastille la plus proche si elle existe
@@ -196,17 +208,23 @@ public class Pac {
 							}
 						}).get();
 						// je me dirige vers la prochaine pastille sur mon chemin
-						x = path.get(1).X;
-						y = path.get(1).Y;
+						if (this.getSpeedTurnsLeft() > 0 && path.size() > 2) {
+							x = path.get(2).X;
+							y = path.get(2).Y;
+						} else {
+							x = path.get(1).X;
+							y = path.get(1).Y;
+						}
 					}
-				} 
-				
-				if (x == -1){
+				}
+
+				if (x == -1) {
 					// la première pastille connue la plus proche
 					Square target = null;
 
 					try {
 						target = this.getLocation().nearestPellet();
+						
 						// TODO modifier nearest
 						target = this.getLocation().shortestPathWithBlock(target).get(1);
 					} catch (PathNotFoundException e) {
@@ -220,35 +238,37 @@ public class Pac {
 				order += x + " " + y;
 			}
 		}
-
+		
 		return order;
 	}
-	
-	private String attackPac(Pac enemy) {
+
+	private String attackPac(Entry<Pac, List<Square>> entry) {
 		String switchPac = "";
+		Pac pac = entry.getKey();
+		List<Square> path = entry.getValue();
 
 		if (this.getAbilityCooldown() == 0) {
 
 			switch (this.getTypeId()) {
 			case ROCK:
-				if (enemy.getTypeId() == ROCK) {
+				if (pac.getTypeId() == ROCK) {
 					switchPac = "PAPER";
-				} else if (enemy.getTypeId() == PAPER) {
+				} else if (pac.getTypeId() == PAPER) {
 					switchPac = "SCISSORS";
 				}
 				System.err.println(switchPac);
 				break;
 			case PAPER:
-				if (enemy.getTypeId() == SCISSORS) {
+				if (pac.getTypeId() == SCISSORS) {
 					switchPac = "ROCK";
-				} else if (enemy.getTypeId() == PAPER) {
+				} else if (pac.getTypeId() == PAPER) {
 					switchPac = "SCISSORS";
 				}
 				break;
 			case SCISSORS:
-				if (enemy.getTypeId() == SCISSORS) {
+				if (pac.getTypeId() == SCISSORS) {
 					switchPac = "ROCK";
-				} else if (enemy.getTypeId() == ROCK) {
+				} else if (pac.getTypeId() == ROCK) {
 					switchPac = "PAPER";
 				}
 				break;
@@ -258,8 +278,8 @@ public class Pac {
 		}
 
 		if (switchPac.equals("")) {
-			if (this.win(enemy)) {
-				switchPac = "MOVE " + this.getPacId() + " " + enemy.getX() + " " + enemy.getY();
+			if (this.win(pac) && pac.abilityCooldown != 0) {
+				switchPac = "MOVE " + this.getPacId() + " " + path.get(1).X + " " + path.get(1).Y;
 			}
 		} else {
 			switchPac = "SWITCH " + this.getPacId() + " " + switchPac;

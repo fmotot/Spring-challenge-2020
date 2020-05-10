@@ -73,8 +73,9 @@ public class Square {
 
 			try {
 				for (Square square : current.contiguousSquares) {
-					if (!list.contains(square) && square.isFree()) {
+					if (!list.contains(square) && square.isFree() && square.getCameFrom() == null) {
 						list.add(square);
+						square.setCameFrom(current);
 					}
 				}
 			} catch (NullPointerException e) {
@@ -104,6 +105,11 @@ public class Square {
 
 	public List<Square> shortestPath(Square target, boolean withBlock) throws PathNotFoundException {
 		Square.initPathFinding();
+		
+		if (target == null) {
+			throw new PathNotFoundException("Impossible de trouver un chemin vers nulle part");
+		}
+		
 		Queue<Square> open = new PriorityQueue<Square>(new Comparator<Square>() {
 
 			@Override
@@ -164,6 +170,16 @@ public class Square {
 		for (Pac pac : Pac.getMyList()) {
 			if (this == pac.getLocation()) {
 				return false;
+			}
+		}
+		
+		for (String str : Pac.orderList) {
+			String[] order = str.split(" ");
+//			System.err.println(Arrays.asList(order));
+			if (order[0].equals("MOVE")) {
+				if (this.X == Integer.parseInt(order[2]) && this.Y == Integer.parseInt(order[3])) {
+					return false;
+				}
 			}
 		}
 
