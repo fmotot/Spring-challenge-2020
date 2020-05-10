@@ -6,18 +6,30 @@ package bzh.motot.fred.spring_challenge_2020;
  *
  */
 public class Board {
+	private static Board instance;
 	public final int WIDTH;
 	public final int HEIGHT;
 	
 	private Square[][] board;
 	
-	public Board(int width, int height) {
+	private Board(int width, int height) {
 		this.HEIGHT = height;
 		this.WIDTH = width;
 		
 		this.board = new Square[this.WIDTH][this.HEIGHT];
 	}
 	
+	public static Board get() {
+		return instance;
+	}
+	
+	static Board set(int width, int height) {
+		if (instance == null) {
+			instance = new Board(width, height);
+		}
+		
+		return instance;
+	}
 	/**
 	 * Ajoute la ligne numéro y en créant les Squares si des cases ne contiennent pas de murµ
 	 * Lie les Squares entre eux
@@ -52,7 +64,12 @@ public class Board {
 			}
 		}
 	}
+	
+	public Square getLocation(Pac pac) {
+		return board[pac.getX()][pac.getY()];
+	}
 
+	// met à jour la valeur de la pastille à l'endroit indiqué
 	public void setPelletValue(int x, int y, int pelletValue) {
 		this.board[x][y].setPelletValue(pelletValue);
 	}
